@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import css from './App.module.css';
 import toast, { Toaster } from 'react-hot-toast';
@@ -41,8 +41,18 @@ export default function App() {
     setSelectedMovie(null);
   };
 
-  const movies = data?.results ?? [];
   const totalPages = data?.total_pages ?? 0;
+
+  useEffect(() => {
+    if (
+      !isLoading &&
+      !isError &&
+      (data?.results as Movie[])?.length === 0 &&
+      query.trim() !== ''
+    ) {
+      toast.error('No movies found for your request.');
+    }
+  }, [data, isLoading, isError, query]);
 
   return (
     <div className={css.app}>
@@ -64,12 +74,14 @@ export default function App() {
         )}
         {isError && <ErrorMessage />}
         {(isLoading || isFetching) && <Loader />}
-        {!isLoading && !isError && movies.length === 0 && query && (
-          toast.error('No movies found for your request.')
-        )}
-        {!isLoading && !isError && movies.length > 0 && (
-          <MovieGrid movies={movies} onSelect={handleSelectMovie} />
-        )}
+        {!isLoading &&
+          !isError &&
+          (data?.results as Movie[])?.length > 0 && (
+            <MovieGrid
+              movies={data?.results as Movie[]}
+              onSelect={handleSelectMovie}
+            />
+          )}
       </div>
 
       {selectedMovie && (
